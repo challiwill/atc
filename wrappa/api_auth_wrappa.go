@@ -41,6 +41,7 @@ func (wrappa *APIAuthWrappa) Wrap(handlers rata.Handlers) rata.Handlers {
 			atc.DeletePipeline,
 			atc.DisableResourceVersion,
 			atc.EnableResourceVersion,
+			atc.DeleteResourceVersion,
 			atc.GetConfig,
 			atc.GetContainer,
 			atc.HijackContainer,

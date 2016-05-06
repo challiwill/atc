@@ -26,11 +26,12 @@ const (
 	GetVersionsDB  = "GetVersionsDB"
 	JobBadge       = "JobBadge"
 
-	ListResources   = "ListResources"
-	GetResource     = "GetResource"
-	PauseResource   = "PauseResource"
-	UnpauseResource = "UnpauseResource"
-	CheckResource   = "CheckResource"
+	ListResources         = "ListResources"
+	GetResource           = "GetResource"
+	PauseResource         = "PauseResource"
+	UnpauseResource       = "UnpauseResource"
+	CheckResource         = "CheckResource"
+	DeleteResourceVersion = "DeleteResourceVersion"
 
 	ListResourceVersions          = "ListResourceVersions"
 	EnableResourceVersion         = "EnableResourceVersion"
@@ -114,6 +115,7 @@ var Routes = rata.Routes([]rata.Route{
 	{Path: "/api/v1/pipelines/:pipeline_name/resources/:resource_name/versions/:resource_version_id/disable", Method: "PUT", Name: DisableResourceVersion},
 	{Path: "/api/v1/pipelines/:pipeline_name/resources/:resource_name/versions/:resource_version_id/input_to", Method: "GET", Name: ListBuildsWithVersionAsInput},
 	{Path: "/api/v1/pipelines/:pipeline_name/resources/:resource_name/versions/:resource_version_id/output_of", Method: "GET", Name: ListBuildsWithVersionAsOutput},
+	{Path: "/api/v1/pipelines/:pipeline_name/resources/:resource_name/versions/:resource_version_id/delete", Method: "DELETE", Name: DeleteResourceVersion},
 
 	{Path: "/api/v1/pipes", Method: "POST", Name: CreatePipe},
 	{Path: "/api/v1/pipes/:pipe_id", Method: "PUT", Name: WritePipe},

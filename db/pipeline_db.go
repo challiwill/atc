@@ -35,7 +35,7 @@ type PipelineDB interface {
 	GetResource(resourceName string) (SavedResource, bool, error)
 	GetResourceType(resourceTypeName string) (SavedResourceType, bool, error)
 	GetResourceVersions(resourceName string, page Page) ([]SavedVersionedResource, Pagination, bool, error)
-	DeleteResourceVersion(resourceName string, resourceVersion atc.Version) (SavedVersionedResource, bool, error)
+	DeleteResourceVersion(resourceID int) (SavedVersionedResource, bool, error)
 
 	PauseResource(resourceName string) error
 	UnpauseResource(resourceName string) error
@@ -243,21 +243,7 @@ func (pdb *pipelineDB) GetResource(resourceName string) (SavedResource, bool, er
 	return resource, found, nil
 }
 
-func (pdb *pipelineDB) DeleteResourceVersion(resourceName string, resourceVersion atc.Version) (SavedVersionedResource, bool, error) {
-	dbResource, found, err := pdb.GetResource(resourceName)
-	if err != nil {
-		return SavedVersionedResource{}, false, err
-	}
-
-	if !found {
-		return SavedVersionedResource{}, false, nil
-	}
-
-	versionJSON, err := json.Marshal(resourceVersion)
-	if err != nil {
-		return SavedVersionedResource{}, false, err
-	}
-
+func (pdb *pipelineDB) DeleteResourceVersion(resourceID int) (SavedVersionedResource, bool, error) {
 	tx, err := pdb.conn.Begin()
 	if err != nil {
 		return SavedVersionedResource{}, false, err
@@ -270,9 +256,8 @@ func (pdb *pipelineDB) DeleteResourceVersion(resourceName string, resourceVersio
 		SELECT v.id, v.enabled, v.type, v.version, v.metadata, r.name, v.check_order
 		FROM versioned_resources v
 		INNER JOIN resources r ON v.resource_id = r.id
-		WHERE v.resource_id = $1
-		AND v.version = $2
-	`, dbResource.ID, versionJSON).Scan(
+		WHERE v.id = $1
+	`, resourceID).Scan(
 		&versionedResource.ID,
 		&versionedResource.Enabled,
 		&versionedResource.Type,
@@ -303,9 +288,8 @@ func (pdb *pipelineDB) DeleteResourceVersion(resourceName string, resourceVersio
 
 	_, err = tx.Exec(`
 		DELETE FROM versioned_resources
-		WHERE resource_id = $1
-		AND version = $2
-	`, dbResource.ID, versionJSON)
+		WHERE id = $1
+	`, resourceID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return SavedVersionedResource{}, false, nil
@@ -314,7 +298,7 @@ func (pdb *pipelineDB) DeleteResourceVersion(resourceName string, resourceVersio
 		return SavedVersionedResource{}, false, err
 	}
 
-	err = pdb.decrementCheckOrder(tx, versionedResource.ID, versionedResource.Type, string(versionJSON))
+	err = pdb.decrementCheckOrder(tx, resourceID, versionedResource.Type, string(returnedVersion))
 	if err != nil {
 		return SavedVersionedResource{}, false, err
 	}

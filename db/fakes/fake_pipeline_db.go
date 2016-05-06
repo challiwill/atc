@@ -118,11 +118,10 @@ type FakePipelineDB struct {
 		result3 bool
 		result4 error
 	}
-	DeleteResourceVersionStub        func(resourceName string, resourceVersion atc.Version) (db.SavedVersionedResource, bool, error)
+	DeleteResourceVersionStub        func(resourceID int) (db.SavedVersionedResource, bool, error)
 	deleteResourceVersionMutex       sync.RWMutex
 	deleteResourceVersionArgsForCall []struct {
-		resourceName    string
-		resourceVersion atc.Version
+		resourceID int
 	}
 	deleteResourceVersionReturns struct {
 		result1 db.SavedVersionedResource
@@ -860,15 +859,14 @@ func (fake *FakePipelineDB) GetResourceVersionsReturns(result1 []db.SavedVersion
 	}{result1, result2, result3, result4}
 }
 
-func (fake *FakePipelineDB) DeleteResourceVersion(resourceName string, resourceVersion atc.Version) (db.SavedVersionedResource, bool, error) {
+func (fake *FakePipelineDB) DeleteResourceVersion(resourceID int) (db.SavedVersionedResource, bool, error) {
 	fake.deleteResourceVersionMutex.Lock()
 	fake.deleteResourceVersionArgsForCall = append(fake.deleteResourceVersionArgsForCall, struct {
-		resourceName    string
-		resourceVersion atc.Version
-	}{resourceName, resourceVersion})
+		resourceID int
+	}{resourceID})
 	fake.deleteResourceVersionMutex.Unlock()
 	if fake.DeleteResourceVersionStub != nil {
-		return fake.DeleteResourceVersionStub(resourceName, resourceVersion)
+		return fake.DeleteResourceVersionStub(resourceID)
 	} else {
 		return fake.deleteResourceVersionReturns.result1, fake.deleteResourceVersionReturns.result2, fake.deleteResourceVersionReturns.result3
 	}
@@ -880,10 +878,10 @@ func (fake *FakePipelineDB) DeleteResourceVersionCallCount() int {
 	return len(fake.deleteResourceVersionArgsForCall)
 }
 
-func (fake *FakePipelineDB) DeleteResourceVersionArgsForCall(i int) (string, atc.Version) {
+func (fake *FakePipelineDB) DeleteResourceVersionArgsForCall(i int) int {
 	fake.deleteResourceVersionMutex.RLock()
 	defer fake.deleteResourceVersionMutex.RUnlock()
-	return fake.deleteResourceVersionArgsForCall[i].resourceName, fake.deleteResourceVersionArgsForCall[i].resourceVersion
+	return fake.deleteResourceVersionArgsForCall[i].resourceID
 }
 
 func (fake *FakePipelineDB) DeleteResourceVersionReturns(result1 db.SavedVersionedResource, result2 bool, result3 error) {

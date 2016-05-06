@@ -1131,8 +1131,9 @@ var _ = Describe("PipelineDB", func() {
 
 		Describe("DeleteResourceVersion", func() {
 			var (
-				resourceName    string
-				resourceVersion atc.Version
+				resourceName           string
+				resourceVersion        atc.Version
+				savedVersionedResource db.SavedVersionedResource
 
 				savedResource db.SavedVersionedResource
 				found         bool
@@ -1140,7 +1141,7 @@ var _ = Describe("PipelineDB", func() {
 			)
 
 			JustBeforeEach(func() {
-				savedResource, found, err = pipelineDB.DeleteResourceVersion(resourceName, resourceVersion)
+				savedResource, found, err = pipelineDB.DeleteResourceVersion(savedVersionedResource.ID)
 			})
 
 			Context("when the request succeeds", func() {
@@ -1156,6 +1157,11 @@ var _ = Describe("PipelineDB", func() {
 							{"ref": "v3"},
 						}
 						err := pipelineDB.SaveResourceVersions(resourceConfig, versionSlice)
+						Expect(err).NotTo(HaveOccurred())
+
+						var found bool
+						savedVersionedResource, found, err = pipelineDB.GetLatestVersionedResource(resource.Name)
+						Expect(found).To(BeTrue())
 						Expect(err).NotTo(HaveOccurred())
 
 						resourceName = resource.Name
