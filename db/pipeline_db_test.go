@@ -1129,6 +1129,66 @@ var _ = Describe("PipelineDB", func() {
 			Expect(latestVR.Version).To(Equal(db.Version{"version": "2"}))
 		})
 
+		Describe("DeleteResourceVersion", func() {
+			var (
+				resourceName    string
+				resourceVersion atc.Version
+
+				savedResource db.SavedVersionedResource
+				found         bool
+				err           error
+			)
+
+			JustBeforeEach(func() {
+				savedResource, found, err = pipelineDB.DeleteResourceVersion(resourceName, resourceVersion)
+			})
+
+			Context("when the request succeeds", func() {
+				Context("if resource exists", func() {
+					BeforeEach(func() {
+						resourceConfig := atc.ResourceConfig{
+							Name:   resource.Name,
+							Type:   "some-type",
+							Source: atc.Source{"some": "source"},
+						}
+						versionSlice := []atc.Version{
+							{"ref": "v1"},
+							{"ref": "v3"},
+						}
+						err := pipelineDB.SaveResourceVersions(resourceConfig, versionSlice)
+						Expect(err).NotTo(HaveOccurred())
+
+						resourceName = resource.Name
+						resourceVersion = atc.Version{"ref": "v3"}
+					})
+
+					It("deletes the resource version and returns it", func() {
+						latestVR, found, err := pipelineDB.GetLatestVersionedResource(resource.Name)
+						Expect(err).NotTo(HaveOccurred())
+						Expect(found).To(BeTrue())
+						Expect(latestVR.Version).To(Equal(db.Version{"ref": "v1"}))
+
+						Expect(savedResource.Resource).To(Equal(resource.Name))
+						Expect(savedResource.Type).To(Equal("some-type"))
+						Expect(savedResource.Version).To(Equal(db.Version{"ref": "v3"}))
+					})
+				})
+
+				Context("if resource does not exist", func() {
+					BeforeEach(func() {
+						resourceName = "some-non-resource"
+						resourceVersion = atc.Version{"not": "valid"}
+					})
+
+					It("returns false", func() {
+						Expect(found).To(BeFalse())
+						Expect(err).NotTo(HaveOccurred())
+						Expect(savedResource).To(Equal(db.SavedVersionedResource{}))
+					})
+				})
+			})
+		})
+
 		Describe("pausing and unpausing resources", func() {
 			It("starts out as unpaused", func() {
 				resource, _, err := pipelineDB.GetResource(resourceName)
